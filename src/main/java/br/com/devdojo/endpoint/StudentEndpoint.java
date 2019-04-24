@@ -1,12 +1,15 @@
 package br.com.devdojo.endpoint;
 
-import br.com.devdojo.error.CustomErrorType;
+import br.com.devdojo.error.ResourceNotFoundException;
 import br.com.devdojo.model.Student;
+import br.com.devdojo.repository.StudentRepository;
 import br.com.devdojo.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("students")
@@ -15,39 +18,50 @@ public class StudentEndpoint {
     @Autowired
     private DateUtil dateUtil;
 
+    @Autowired
+    private StudentRepository studentRepository;
+
     @GetMapping
-    public ResponseEntity<?> listAll() {
-        return new ResponseEntity<>(Student.studentList, HttpStatus.NOT_FOUND);
+    public ResponseEntity listAll() {
+        return new ResponseEntity<>(studentRepository.findAll(), HttpStatus.OK);
     }
 
     @GetMapping(path = "/{id}")
-    public ResponseEntity<?> getStudentById(@PathVariable("id") int id) {
-        Student student = new Student();
-        student.setId(id);
-        int index = Student.studentList.indexOf(student);
-        if(index == -1)
-            return new ResponseEntity<>(new CustomErrorType("Student not found"),HttpStatus.NOT_FOUND);
+    public ResponseEntity getStudentById(@PathVariable("id") Long id) {
 
-        return new ResponseEntity<>(Student.studentList.get(index), HttpStatus.OK);
+        this.verifyIfStudentExists(id);
+        Optional<Student> student = studentRepository.findById(id);
+
+        return new ResponseEntity<>(student.get(), HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/findByName/{name}")
+    public ResponseEntity findStudentsByName(@PathVariable("name") String name) {
+        return new ResponseEntity(studentRepository.findByNameIgnoreCaseContaining(name), HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<?> save(@RequestBody Student student) {
-        Student.studentList.add(student);
-        return new ResponseEntity<>(student, HttpStatus.OK);
+    public ResponseEntity save(@RequestBody Student student) {
+        return new ResponseEntity<>(studentRepository.save(student), HttpStatus.CREATED);
     }
 
-    @DeleteMapping
-    public ResponseEntity<?> delete(@RequestBody Student student) {
-        Student.studentList.remove(student);
+    @DeleteMapping(path = "/{id}")
+    public ResponseEntity delete(@PathVariable("id") Long id) {
+        this.verifyIfStudentExists(id);
+        studentRepository.deleteById(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PutMapping
-    public ResponseEntity<?> update(@RequestBody Student student) {
-        Student.studentList.remove(student);
-        Student.studentList.add(student);
+    public ResponseEntity update(@RequestBody Student student) {
+        this.verifyIfStudentExists(student.getId());
+        studentRepository.save(student);
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    private void verifyIfStudentExists(Long id) {
+        if (!studentRepository.findById(id).isPresent())
+            throw new ResourceNotFoundException("Student not found for ID: " + id);
     }
 
 }
