@@ -7,8 +7,10 @@ import br.com.devdojo.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.Optional;
 
 @RestController
@@ -41,7 +43,8 @@ public class StudentEndpoint {
     }
 
     @PostMapping
-    public ResponseEntity save(@RequestBody Student student) {
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity save(@Valid @RequestBody Student student) {
         return new ResponseEntity<>(studentRepository.save(student), HttpStatus.CREATED);
     }
 

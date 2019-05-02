@@ -1,11 +1,12 @@
 package br.com.devdojo.model;
 
+import org.hibernate.validator.constraints.NotEmpty;
+
 import javax.persistence.Entity;
-import javax.validation.constraints.NotNull;
 
 @Entity
 public class Student extends AbstractEntity {
-    @NotNull
+    @NotEmpty
     private String name;
 
     public String getName() {
