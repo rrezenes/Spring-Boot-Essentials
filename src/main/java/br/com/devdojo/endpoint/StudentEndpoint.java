@@ -5,12 +5,14 @@ import br.com.devdojo.model.Student;
 import br.com.devdojo.repository.StudentRepository;
 import br.com.devdojo.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -24,8 +26,8 @@ public class StudentEndpoint {
     private StudentRepository studentRepository;
 
     @GetMapping
-    public ResponseEntity listAll() {
-        return new ResponseEntity<>(studentRepository.findAll(), HttpStatus.OK);
+    public ResponseEntity listAll(Pageable pageable) {
+        return new ResponseEntity<>(studentRepository.findAll(pageable), HttpStatus.OK);
     }
 
     @GetMapping(path = "/{id}")
@@ -46,6 +48,12 @@ public class StudentEndpoint {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity save(@Valid @RequestBody Student student) {
         return new ResponseEntity<>(studentRepository.save(student), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/list")
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity saveList(@Valid @RequestBody List<Student> students) {
+        return new ResponseEntity<>(studentRepository.saveAll(students), HttpStatus.CREATED);
     }
 
     @DeleteMapping(path = "/{id}")
